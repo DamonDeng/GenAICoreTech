@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fully Connected Neural Network</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        .node {
+            fill: #1d1d81;
+            stroke: #efecec;
+            stroke-width: 1.5px;
+        }
+
+        .link {
+            stroke: #ee0808;
+            stroke-opacity: 0.6;
+        }
+
+        .color_sampler{
+            fill: #962e83;
+            stroke: #5a4747;
+            stroke-width: 1.5px;}
+
+        text {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="svg_container"> </div>
+    <button onclick="save_png()" >Save as PNG</button>
+
+    <script src="./saveSvgAsPng.js"></script>  
+
+    <script>
+        // Set up the dimensions of the canvas
+        const width = 600;
+        const height = 400;
+
+        // Create the SVG container
+        const svg = d3.select("div")
+            .append("svg")
+            .attr("id", "svg_target_id")
+            .attr("width", width)
+            .attr("height", height);
+
+
+        svg.append("defs")
+        .append("marker")
+        .attr("id", "arrow")
+        .attr("viewBox", "0 0 10 10")
+        .attr("refX", 5)
+        .attr("refY", 5)
+        .attr("markerWidth", 5)
+        .attr("markerHeight", 5)
+        .attr("orient", "auto-start-reverse")
+        .append("path")
+        .attr("d", "M 0 1 L 10 5 L 0 9 z")
+        .attr("fill", "orange");
+
+        // Set the background color
+        need_background = false;
+
+        if (need_background) {
+            svg.append("rect")
+            .attr("rx", 20) // Horizontal radius
+            .attr("ry", 20) // Vertical radius
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .attr("fill", "#f0f0f0");
+        }
+
+        const input_sequense = ["The", "students", "open", "their", "books"];
+
+        const out_sequense = [ "students", "open", "their", "books", "."];
+        
+        hidden_layer_number = 4;
+
+
+        top_layer_y = 50;
+
+        layer_height = 80;
+        node_grid_width = 110;
+
+        middle_x = width / 2;
+
+        
+
+        node_data = [];
+
+        for (let i = 0; i < hidden_layer_number; i++) {
+            for (let j = 0; j < input_sequense.length; j++) {
+
+                dynamic_x = middle_x - (input_sequense.length/2 - j ) * node_grid_width + node_grid_width/2; 
+                node_data.push({
+                    layer: i,
+                    node_seq: j,
+                    location_x: dynamic_x,
+                    location_y: top_layer_y + i * layer_height,
+                    name: "h_" + (i+1) + "_" + (j+1),
+                    color: "rgb(116, 87, 222)"
+                });
+            }
+        }
+
+        console.log(node_data);
+
+
+        // Create the nodes
+
+        rect_height = 30;
+        rect_width = 60;
+
+        half_rect_width = rect_width / 2;
+        half_rect_height = rect_height / 2;
+
+        nodes = svg.selectAll("retangle")
+            .data(node_data)
+            .enter()
+            .append("rect")
+            //.attr("text", d => d.name)
+            .attr("x", d => d.location_x - half_rect_width)
+            .attr("y", d => d.location_y - half_rect_height)
+            .attr("width", rect_width)
+            .attr("height", rect_height)
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .attr("fill", d => d.color)
+            .attr("class", "node")
+            .style("fill", d => d.color);
+
+            
+    // Create the links between layers
+
+    node_radius_with_margin =  3;
+
+    for (let i = 0; i < hidden_layer_number - 1; i++) {
+        //const current_layer = layer_meta_data[i];
+        //const next_layer = layer_meta_data[i + 1];
+
+        for (let j = 0; j < input_sequense.length; j++) {
+            const current_node = node_data.find(d => d.layer === i && d.node_seq === j);
+
+            for (let k = 0; k < input_sequense.length; k++) {
+
+                if (k != j ){
+
+                    
+                    continue;
+                }
+
+
+                const next_node = node_data.find(d => d.layer === i + 1 && d.node_seq === k);
+
+                original_start_x = current_node.location_x;
+                original_start_y = current_node.location_y + (half_rect_height + node_radius_with_margin);
+
+                original_end_x = next_node.location_x;
+                original_end_y = next_node.location_y - (half_rect_height + node_radius_with_margin);
+
+
+
+
+                const dx = original_end_x - original_start_x;
+                const dy = original_end_y - original_start_y;
+
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                const start_x = original_start_x + (node_radius_with_margin * dx / distance);
+                const start_y = original_start_y + (node_radius_with_margin * dy / distance);
+                //const end_x = original_end_x - (node_radius_with_margin * dx / distance);
+                //const end_y = original_end_y - (node_radius_with_margin * dy / distance);
+
+                const end_x = original_end_x;
+                const end_y = original_end_y;
+
+                svg.append("line")
+                    .attr("x1", start_x)
+                    .attr("y1", start_y)
+                    .attr("x2", end_x)
+                    .attr("y2", end_y)
+                    .attr("stroke", "orange")
+                    .attr("stroke-width", 1.5)
+                    .attr("marker-start", "url(#arrow)");
+
+                
+            }
+        }
+    }
+
+    </script>
+
+    <script>
+
+        function save_png(){
+          saveSvgAsPng(document.getElementById("svg_target_id"), "001_neuron.png");
+        }
+        
+    </script>
+</body>
+</html>
+
+
