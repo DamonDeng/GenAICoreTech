@@ -4,6 +4,8 @@ This is a textbook on the core technologies of Generative Artificial Intelligenc
 
 An interesting fact is that most of the content was written by the Claude3 language model running on AWS Bedrock.
 
+I still need sometime to modify the generated content.
+
 The [Chinese version](./README_cn.md) takes priority, so please refer to the Chinese README for more details. 
 
 An English version is currently in the planning stages.
