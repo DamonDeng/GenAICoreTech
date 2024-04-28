@@ -27,22 +27,24 @@
     </style>
 </head>
 <body>
+
+    <div id="svg_container"> </div>
     <button onclick="save_png()" >Save as PNG</button>
 
     <script src="./saveSvgAsPng.js"></script>  
 
     <script>
         // Set up the dimensions of the canvas
-        const width = 400;
-        //const height = 600;
-        const height = 300;
+        const width = 370;
+        const height = 320;
 
         // Create the SVG container
-        const svg = d3.select("body")
+        const svg = d3.select("div")
             .append("svg")
             .attr("id", "svg_target_id")
             .attr("width", width)
             .attr("height", height);
+
 
         svg.append("defs")
         .append("marker")
@@ -57,13 +59,18 @@
         .attr("d", "M 0 0 L 10 5 L 0 10 z")
         .attr("fill", "orange");
 
-        
+        // Set the background color
+        svg.append("rect")
+        .attr("rx", 20) // Horizontal radius
+        .attr("ry", 20) // Vertical radius
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .attr("fill", "#f0f0f0");
+
         const layer_meta_data =[
-            //{ name: "y_", nodes: 2, color: "#1d1d81"},
-            { name: "h_", nodes: 4, color: "#1d7081"},
-            { name: "x_", nodes: 3, color: "#1d8160"}
+            { name: "y_", nodes: 1, color: "#1d1d81"},
+            { name: "x_", nodes: 5, color: "#1d8160"}
         ];
-        
 
         top_layer_y = 50;
 
@@ -78,12 +85,14 @@
 
         for (let i = 0; i < layer_meta_data.length; i++) {
             for (let j = 0; j < layer_meta_data[i].nodes; j++) {
+
+                dynamic_x = middle_x - (layer_meta_data[i].nodes/2 - j ) * node_grid_width + node_grid_width/2; 
                 node_data.push({
                     layer: i,
                     node_seq: j,
-                    location_x: middle_x - (layer_meta_data[i].nodes/2)* node_grid_width +  j * node_grid_width,
+                    location_x: dynamic_x,
                     location_y: top_layer_y + i * layer_height,
-                    name: layer_meta_data[i].name + (j+1),
+                    name: layer_meta_data[i].name + (j),
                     color: layer_meta_data[i].color
                 });
             }
@@ -106,7 +115,7 @@
             .style("fill", d => d.color);
 
         
-        nodes = svg.selectAll("text")
+            nodes = svg.selectAll("text")
             .data(node_data)
             .enter()
             .append("text")
@@ -140,30 +149,22 @@
                 const end_x = next_node.location_x - (node_radius_with_margin * dx / distance);
                 const end_y = next_node.location_y - (node_radius_with_margin * dy / distance);
 
-                const w_offset_unit = 18;
-                const w_location_offset = (j - (current_layer.nodes - 1) / 2) * w_offset_unit;
-
-                // define a rainbow color then select one of them base on the value of j
-                const rainbow_color = d3.interpolateRainbow(j / (current_layer.nodes));
-
-
                 svg.append("line")
                     .attr("x1", start_x)
                     .attr("y1", start_y)
                     .attr("x2", end_x)
                     .attr("y2", end_y)
-                    .attr("stroke", rainbow_color)
+                    .attr("stroke", "orange")
                     .attr("stroke-width", 1)
                     .attr("marker-start", "url(#arrow)");
 
-                const line_slope = (end_y - start_y) / (end_x - start_x);
                 svg.append("text")
                 .attr("text-anchor", "middle") // Center the text
                 .attr("dominant-baseline", "middle") // Vertically center
-                .attr("x", (start_x + end_x) / 2 - w_location_offset/line_slope)
-                .attr("y", (start_y + end_y) / 2 - w_location_offset)
-                .text("w_" + (k+1))
-                .attr("fill", rainbow_color);
+                .attr("x", (start_x + end_x) / 2)
+                .attr("y", (start_y + end_y) / 2)
+                .text("w_" + (k))
+                .attr("fill", "black");
             }
         }
     }
@@ -173,7 +174,7 @@
     <script>
 
         function save_png(){
-          saveSvgAsPng(document.getElementById("svg_target_id"), "diagram.png");
+          saveSvgAsPng(document.getElementById("svg_target_id"), "001_neuron.png");
         }
         
     </script>
