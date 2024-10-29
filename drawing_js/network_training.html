@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fully Connected Neural Network</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        .node {
+            fill: #1d1d81;
+            stroke: #bea2a2;
+            stroke-width: 2.5px;
+        }
+
+        .link {
+            stroke: #ee0808;
+            stroke-opacity: 0.6;
+        }
+
+        .color_sampler{
+            fill: #1d8160;
+            stroke: #5a4747;
+            stroke-width: 1.5px;}
+
+        text {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <button onclick="save_png()" >Save as PNG</button>
+
+    <script src="./saveSvgAsPng.js"></script>  
+
+    <script>
+        // Set up the dimensions of the canvas
+        const width = 400;
+        const height = 600;
+        //const height = 300;
+
+        // Create the SVG container
+        const svg = d3.select("body")
+            .append("svg")
+            .attr("id", "svg_target_id")
+            .attr("width", width)
+            .attr("height", height);
+
+        svg.append("defs")
+        .append("marker")
+        .attr("id", "arrow")
+        .attr("viewBox", "0 0 10 10")
+        .attr("refX", 5)
+        .attr("refY", 5)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto-start-reverse")
+        .append("path")
+        .attr("d", "M 0 0 L 10 5 L 0 10 z")
+        .attr("fill", "orange");
+
+        
+        const layer_meta_data =[
+            { name: "y_", nodes: 1, color: "#1d1d81"},
+            { name: "h_", nodes: 2, color: "#1d7081"},
+            { name: "x_", nodes: 2, color: "#1d8160"}
+        ];
+        
+
+        top_layer_y = 50;
+
+        layer_height = 200;
+        node_grid_width = 80;
+
+        middle_x = width / 2;
+
+        node_radius = 20;
+
+        node_data = [];
+
+        for (let i = 0; i < layer_meta_data.length; i++) {
+            for (let j = 0; j < layer_meta_data[i].nodes; j++) {
+                node_data.push({
+                    layer: i,
+                    node_seq: j,
+                    location_x: middle_x - (layer_meta_data[i].nodes/2)* node_grid_width +  j * node_grid_width,
+                    location_y: top_layer_y + i * layer_height,
+                    name: layer_meta_data[i].name + (j+1),
+                    color: layer_meta_data[i].color
+                });
+            }
+        }
+
+        console.log(node_data);
+
+
+        // Create the nodes
+        nodes = svg.selectAll("circle")
+            .data(node_data)
+            .enter()
+            .append("circle")
+            //.attr("text", d => d.name)
+            .attr("cx", d => d.location_x)
+            .attr("cy", d => d.location_y)
+            .attr("r", node_radius)
+            .attr("fill", d => d.color)
+            .attr("class", "node")
+            .style("fill", d => d.color);
+
+        
+        nodes = svg.selectAll("text")
+            .data(node_data)
+            .enter()
+            .append("text")
+            .attr("text-anchor", "middle") // Center the text
+            .attr("dominant-baseline", "middle") // Vertically center
+            .attr("x", d => d.location_x)
+            .attr("y", d => d.location_y)
+            .text(d => d.name)
+            .attr("fill", "white");
+            
+    // Create the links between layers
+
+    node_radius_with_margin = node_radius + 4;
+
+    for (let i = 0; i < layer_meta_data.length - 1; i++) {
+        const current_layer = layer_meta_data[i];
+        const next_layer = layer_meta_data[i + 1];
+
+        for (let j = 0; j < current_layer.nodes; j++) {
+            const current_node = node_data.find(d => d.layer === i && d.node_seq === j);
+
+            for (let k = 0; k < next_layer.nodes; k++) {
+                const next_node = node_data.find(d => d.layer === i + 1 && d.node_seq === k);
+
+                const dx = next_node.location_x - current_node.location_x;
+                const dy = next_node.location_y - current_node.location_y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                const start_x = current_node.location_x + (node_radius_with_margin * dx / distance);
+                const start_y = current_node.location_y + (node_radius_with_margin * dy / distance);
+                const end_x = next_node.location_x - (node_radius_with_margin * dx / distance);
+                const end_y = next_node.location_y - (node_radius_with_margin * dy / distance);
+
+                const w_offset_unit = 18;
+                const w_location_offset = (j - (current_layer.nodes - 1) / 2) * w_offset_unit;
+
+                // define a rainbow color then select one of them base on the value of j
+                const rainbow_color = d3.interpolateRainbow(j / (current_layer.nodes));
+
+
+                svg.append("line")
+                    .attr("x1", start_x)
+                    .attr("y1", start_y)
+                    .attr("x2", end_x)
+                    .attr("y2", end_y)
+                    .attr("stroke", rainbow_color)
+                    .attr("stroke-width", 1)
+                    .attr("marker-start", "url(#arrow)");
+
+                const line_slope = (end_y - start_y) / (end_x - start_x);
+                svg.append("text")
+                .attr("text-anchor", "middle") // Center the text
+                .attr("dominant-baseline", "middle") // Vertically center
+                .attr("x", (start_x + end_x) / 2 - w_location_offset/line_slope)
+                .attr("y", (start_y + end_y) / 2 - w_location_offset)
+                .text("w_" + (k+1))
+                .attr("fill", rainbow_color);
+            }
+        }
+    }
+
+    </script>
+
+    <script>
+
+        function save_png(){
+          saveSvgAsPng(document.getElementById("svg_target_id"), "diagram.png");
+        }
+        
+    </script>
+</body>
+</html>
+
+
